@@ -64,6 +64,10 @@ app = (function () {
 
         var dateTarget = dateF.concat(" ",hour);
         $("#movieSelected").text("Availability of Functions: "+ movieName);
+
+        ///////Parte 3
+            connectAndSubscribe();
+
         $.getScript(module, function(){
             client.getFunctionByNameAndDateAndMovieName(nameOfCinema,dateTarget,movieName,drawSeats);
         });
@@ -333,7 +337,7 @@ app = (function () {
         //subscribe to /topic/TOPICXX when connections succeed
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/buyticket', function (message) {
+            stompClient.subscribe('/topic/buyticket.'+cinema+'.'+dateF.concat(" ",movieHour)+'.'+movieName1, function (message) {
                     var theObject = JSON.parse(message.body);
                     RedrawSeats();
             });
@@ -347,7 +351,7 @@ app = (function () {
             "row": row,
             "col": col
         };
-        stompClient.send("/topic/buyticket", {}, JSON.stringify(func));
+        stompClient.send('/topic/buyticket.'+cinema+'.'+dateF.concat(" ",movieHour)+'.'+movieName1, {}, JSON.stringify(func));
     }
 
 //////////////////////////////////////////
