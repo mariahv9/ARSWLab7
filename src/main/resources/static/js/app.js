@@ -60,13 +60,12 @@ app = (function () {
         clearTable();
         movieName1 = movieName;
         movieGen = gener;
-        movieHour = hour
+        movieHour = hour;
 
         var dateTarget = dateF.concat(" ",hour);
         $("#movieSelected").text("Availability of Functions: "+ movieName);
-
         ///////Parte 3
-            connectAndSubscribe();
+        connectAndSubscribe();
 
         $.getScript(module, function(){
             client.getFunctionByNameAndDateAndMovieName(nameOfCinema,dateTarget,movieName,drawSeats);
@@ -266,8 +265,7 @@ app = (function () {
 
 // Stomp functions  //////////////////////
 
-///////////////--------------// parte2 lab////////////////////////////////////////////////////////////////
-    //get the x, y positions of the mouse click relative to the canvas
+
     var getMousePosition = function (evt) {
         $('#canvas').click(function (e) {
             var canvas = document.getElementById("canvas");
@@ -275,9 +273,12 @@ app = (function () {
             var x = Math.floor(e.clientX - rect.x);
             var y = e.clientY - rect.y;
             PositionMouse(x,y);
-            seats[row][col] = false;
-            buyTicketStomp();
-            alert("Seat on row= "+row+" col= "+col+" Rented")
+            if(seats[row][col] == false){
+               alert("Seat already rented");
+            }else{
+                seats[row][col] = false;
+                buyTicketStomp();
+            }
         });
     };
 
@@ -306,27 +307,6 @@ app = (function () {
         }
     }
 
-    function RedrawSeats() {
-        var c = document.getElementById("canvas");
-        var count = c.getContext("2d");
-        count.fillStyle = "deepskyblue";
-        count.fillRect (140, 50, 600, 50);
-        var d = document.getElementById("canvas");
-        var dtx = d.getContext("2d");
-        var sumPosition = 0;
-        for (var x = 0; x < seats[0].length; x++) {
-            for (var y = 0; y < seats.length; y++) {
-                if(seats[y][x] == false){
-                    dtx.fillStyle = "firebrick";
-                } else{
-                    dtx.fillStyle = "grey";
-                }
-                dtx.fillRect(x*50 + 30 +sumPosition, y*40 +120 , 30, 30);
-            }
-            sumPosition+=20;
-        }
-    }
-
 
 
     var connectAndSubscribe = function(){
@@ -339,7 +319,7 @@ app = (function () {
             console.log('Connected: ' + frame);
             stompClient.subscribe('/topic/buyticket.'+cinema+'.'+dateF.concat(" ",movieHour)+'.'+movieName1, function (message) {
                     var theObject = JSON.parse(message.body);
-                    RedrawSeats();
+                    consultFunctionBySeats(cinema,dateF,movieHour,movieName1,movieGen);
             });
         });
     };
@@ -351,8 +331,10 @@ app = (function () {
             "row": row,
             "col": col
         };
-        stompClient.send('/topic/buyticket.'+cinema+'.'+dateF.concat(" ",movieHour)+'.'+movieName1, {}, JSON.stringify(func));
+        stompClient.send('/app/buyticket.'+cinema+'.'+dateF.concat(" ",movieHour)+'.'+movieName1, {}, JSON.stringify(func));
     }
+
+
 
 //////////////////////////////////////////
     function resetValue(){
@@ -377,12 +359,98 @@ app = (function () {
         delFunction: delFunction,
         buyTicket: buyTicket,
         getMousePosition: getMousePosition,
-        init: function () {
-                    var can = document.getElementById("canvas");
-
-                    //websocket connection
-                    connectAndSubscribe();
-                },
         buyTicketStomp: buyTicketStomp
     }
+
+
+
+
+
+/////////////////--------------// parte2 lab////////////////////////////////////////////////////////////////
+//    //get the x, y positions of the mouse click relative to the canvas
+//    var getMousePosition = function (evt) {
+//        $('#canvas').click(function (e) {
+//            var canvas = document.getElementById("canvas");
+//            var rect = canvas.getBoundingClientRect();
+//            var x = Math.floor(e.clientX - rect.x);
+//            var y = e.clientY - rect.y;
+//            PositionMouse(x,y);
+//            seats[row][col] = false;
+//            buyTicketStomp();
+//            alert("Seat on row= "+row+" col= "+col+" Rented")
+//        });
+//    };
+//
+//    function PositionMouse(pX,pY){
+//        row = -1;
+//        col = -1;
+//
+//        var x1 = 30;
+//        var x2 = 60;
+//        var y1 = 120;
+//        var y2 = 150;
+//
+//        for(var seatY=0; seatY<12; seatY++){
+//            for(var seatX=0; seatX<7; seatX++){
+//                if(x1<pX && pX<x2 && y1<pY && pY<y2){
+//                    row=seatX;
+//                    col=seatY;
+//                }
+//                y1 = y1 + 40;
+//                y2 = y2 + 40;
+//            }
+//            x1 = x1 + 70;
+//            x2 = x2 + 70;
+//            y1 = 120;
+//            y2 = 150;
+//        }
+//    }
+//
+//    function RedrawSeats() {
+//        var c = document.getElementById("canvas");
+//        var count = c.getContext("2d");
+//        count.fillStyle = "deepskyblue";
+//        count.fillRect (140, 50, 600, 50);
+//        var d = document.getElementById("canvas");
+//        var dtx = d.getContext("2d");
+//        var sumPosition = 0;
+//        for (var x = 0; x < seats[0].length; x++) {
+//            for (var y = 0; y < seats.length; y++) {
+//                if(seats[y][x] == false){
+//                    dtx.fillStyle = "firebrick";
+//                } else{
+//                    dtx.fillStyle = "grey";
+//                }
+//                dtx.fillRect(x*50 + 30 +sumPosition, y*40 +120 , 30, 30);
+//            }
+//            sumPosition+=20;
+//        }
+//    }
+//
+//
+//
+//    var connectAndSubscribe = function(){
+//        console.info('Connecting to WS...');
+//        var socket = new SockJS('/stompendpoint');
+//        stompClient = Stomp.over(socket);
+//
+//        //subscribe to /topic/TOPICXX when connections succeed
+//        stompClient.connect({}, function (frame) {
+//            console.log('Connected: ' + frame);
+//            stompClient.subscribe('/topic/buyticket.'+cinema+'.'+dateF+'.'+movieName1, function (message) {
+//                    var theObject = JSON.parse(message.body);
+//                    RedrawSeats();
+//            });
+//        });
+//    };
+//
+//
+//
+//    function buyTicketStomp(){
+//        var func = {
+//            "row": row,
+//            "col": col
+//        };
+//        stompClient.send('/app/buyticket.'+cinema+'.'+dateF+'.'+movieName1, {}, JSON.stringify(func));
+//    }
 })();
